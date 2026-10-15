@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="350" height="112" viewBox="0 0 350 112" fill="none">
+  <title>W&amp;A Balance</title>
+  <defs>
+    <linearGradient id="gold" x1="14" y1="9" x2="103" y2="106" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4DF9C"/>
+      <stop offset=".48" stop-color="#D9B66C"/>
+      <stop offset="1" stop-color="#B88C43"/>
+    </linearGradient>
+  </defs>
+  <g stroke="url(#gold)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 25h22M25 26l24 66L66 41M55 26l23 65 24-65M92 25h21"/>
+    <path d="m42 79 25-61 28 61M50 61h35M34 79h20M85 79h17"/>
+    <path d="M66 18c-9-15 13-18 11-6-2 8-13 12-13 21 0 15 19 43 17 58-2 14-18 11-15 0M50 80c-13 7-18 21-8 21 8 0 9-10 7-17"/>
+  </g>
+  <text x="109" y="63" fill="#F8F0DF" font-family="Georgia, 'Times New Roman', serif" font-size="38" letter-spacing="1.7">BALANCE</text>
+  <path d="M112 75h218" stroke="url(#gold)" stroke-width=".7"/>
+  <g fill="#E1CDA3" font-family="Arial, sans-serif" font-size="6.4" letter-spacing="1.55" text-anchor="middle">
+    <text x="222" y="88">CONSULTORÍA JURÍDICA, CONTABLE</text>
+    <text x="222" y="98">Y FISCAL</text>
+  </g>
+</svg>

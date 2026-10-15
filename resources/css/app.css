@@ -8,4 +8,90 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: Georgia, 'Times New Roman', serif;
+    --color-wine-950: #1b080c;
+    --color-wine-900: #310a12;
+    --color-wine-800: #4e0d1b;
+    --color-wine-700: #7d1428;
+    --color-wine-600: #981e36;
+    --color-gold: #d5b575;
+    --color-gold-light: #edd49b;
+    --color-ivory: #f7f1e7;
+    --color-muted: #c5b5b2;
+}
+
+@layer components {
+    .login-scene {
+        background:
+            radial-gradient(ellipse at 50% 39%, #68112655, transparent 56%),
+            radial-gradient(ellipse at 0% 100%, #650e1c66, transparent 47%),
+            linear-gradient(125deg, #1a0308 4%, #3c0812 49%, #20040a 100%);
+        isolation: isolate;
+    }
+
+    .login-scene::before,
+    .login-scene::after {
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        pointer-events: none;
+        content: '';
+    }
+
+    .login-scene::before {
+        background: repeating-linear-gradient(
+            132deg,
+            transparent 0 135px,
+            #8e263711 135px 136px,
+            #0000000d 136px 245px,
+            transparent 245px 380px
+        );
+        mask-image: linear-gradient(to right, black, transparent 40%, transparent 60%, black);
+    }
+
+    .login-scene::after {
+        background: radial-gradient(ellipse at center, transparent 35%, #09020488 100%);
+    }
+
+    .login-corner {
+        position: absolute;
+        width: clamp(135px, 23vw, 320px);
+        aspect-ratio: 1;
+        pointer-events: none;
+    }
+
+    .login-corner--top {
+        top: 0;
+        right: 0;
+    }
+
+    .login-corner--bottom {
+        bottom: 0;
+        left: 0;
+        transform: rotate(180deg);
+    }
+
+    .login-card {
+        background: linear-gradient(145deg, #230d12ed, #17090de8);
+        box-shadow: 0 28px 90px #08010366, inset 0 1px 0 #f4dca50a;
+    }
+
+    .login-input {
+        @apply border-gold/25 placeholder:text-muted/80 hover:border-gold/45 focus:border-gold focus:ring-2 focus:ring-gold/15;
+        color-scheme: dark;
+    }
+
+    .login-input[aria-invalid='true'] {
+        @apply border-rose-300/75 hover:border-rose-300 focus:border-rose-300 focus:ring-rose-300/20;
+    }
+
+    .login-input[data-valid='true']:not([aria-invalid='true']) {
+        @apply border-gold/70 hover:border-gold focus:border-gold focus:ring-gold/20;
+    }
+
+    .login-input:-webkit-autofill {
+        -webkit-text-fill-color: var(--color-ivory);
+        caret-color: var(--color-gold);
+        box-shadow: 0 0 0 1000px #261016 inset;
+    }
 }
