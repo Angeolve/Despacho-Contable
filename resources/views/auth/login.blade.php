@@ -11,11 +11,14 @@
             </p>
         </div>
 
-        {{-- This visual preview intentionally omits field names to avoid sending credentials. --}}
-        <form action="{{ route('login') }}" method="get" class="mt-8" data-login-preview>
+        <form action="{{ route('login') }}" method="post" class="mt-8" data-login-form>
+            @csrf
             <div class="space-y-5">
                 <x-form.input
                     id="email"
+                    name="email"
+                    :value="old('email')"
+                    :error="$errors->first('email')"
                     label="Correo electrónico"
                     type="email"
                     icon="mail"
@@ -29,6 +32,8 @@
 
                 <x-form.input
                     id="password"
+                    name="password"
+                    :error="$errors->first('password')"
                     label="Contraseña"
                     type="password"
                     icon="lock"
@@ -53,10 +58,8 @@
 
             <div class="mt-3 text-right">
                 <a
-                    href="#login-notice"
+                    href="{{ route('password.request') }}"
                     class="inline-block py-1 text-xs text-gold underline decoration-gold/40 underline-offset-4 transition-colors hover:text-gold-light focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold motion-reduce:transition-none"
-                    data-preview-link
-                    data-preview-message="La recuperación de contraseña estará disponible próximamente."
                 >¿Olvidaste tu contraseña?</a>
             </div>
 
@@ -82,7 +85,7 @@
                 >Regístrate como cliente</a>
             </p>
 
-            <p id="login-notice" role="status" aria-live="polite" aria-atomic="true" class="mt-5 text-center text-xs leading-relaxed text-gold-light" data-preview-notice hidden></p>
+            <p id="login-notice" role="status" aria-live="polite" aria-atomic="true" class="mt-5 text-center text-xs leading-relaxed text-gold-light" @if (! session('status')) hidden @endif>{{ session('status') }}</p>
         </form>
     </section>
 </x-layouts.guest>

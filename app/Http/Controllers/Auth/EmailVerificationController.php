@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
+use App\Support\AuthenticatedHome;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +16,7 @@ class EmailVerificationController extends Controller
     public function notice(Request $request): View|RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('registration.complete');
+            return $this->verifiedRedirect($request);
         }
 
         return view('auth.verify-email');
@@ -24,13 +26,13 @@ class EmailVerificationController extends Controller
     {
         $request->fulfill();
 
-        return redirect()->route('registration.complete');
+        return $this->verifiedRedirect($request);
     }
 
     public function send(Request $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('registration.complete');
+            return $this->verifiedRedirect($request);
         }
 
         try {
@@ -38,9 +40,16 @@ class EmailVerificationController extends Controller
         } catch (TransportExceptionInterface $exception) {
             report($exception);
 
-            return back()->with('mail_error', 'No pudimos enviar el correo. Inténtalo de nuevo en unos momentos.');
+            return redirect()->route('verification.notice')->with('mail_error', 'No pudimos enviar el correo. Inténtalo de nuevo en unos momentos.');
         }
 
-        return back()->with('verification_sent', true);
+        return redirect()->route('verification.notice')->with('verification_sent', true);
+    }
+
+    private function verifiedRedirect(Request $request): RedirectResponse
+    {
+        return redirect()->route($request->user()->role?->name === Role::CLIENTE
+            ? 'registration.complete'
+            : AuthenticatedHome::routeName($request->user()));
     }
 }

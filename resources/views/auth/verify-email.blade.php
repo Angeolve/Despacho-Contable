@@ -16,5 +16,6 @@
             @csrf
             <button type="submit" class="flex min-h-13 w-full cursor-pointer items-center justify-center rounded-lg border border-white/5 bg-linear-to-r from-wine-700 to-wine-600 px-5 py-3 text-sm font-medium text-white hover:from-wine-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">Reenviar enlace de verificación</button>
         </form>
+        <x-auth.logout />
     </section>
 </x-layouts.guest>

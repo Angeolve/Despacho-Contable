@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureRole;
+use App\Support\AuthenticatedHome;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,9 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Preserve exact registration input so forbidden whitespace cannot be silently removed.
         $middleware->trimStrings(except: [fn (Request $request) => $request->isMethod('POST') && $request->is('register')]);
-        $middleware->redirectUsersTo(fn (Request $request) => $request->user()->hasVerifiedEmail()
-            ? route('registration.complete') : route('verification.notice'));
+        $middleware->alias(['role' => EnsureRole::class]);
+        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(fn (Request $request) => route(AuthenticatedHome::routeName($request->user())));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->dontFlash(['token']);
     })->create();

@@ -2,15 +2,26 @@
 const emailPattern = /^[a-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*$/i;
 const namePattern = /^(?:\p{L}\p{M}*| )+$/u;
 
+export function trimRegistrationName(value) {
+    // Match Laravel: remove ordinary outer spaces, preserving invalid whitespace.
+    return value.replace(/^ +| +$/g, '');
+}
+
 export function validateRegistrationField(field, value, password = '') {
     switch (field) {
         case 'firstName':
         case 'lastName': {
-            if (!value.trim()) {
+            const normalized = trimRegistrationName(value);
+            if (!normalized) {
                 return field === 'firstName' ? 'Ingresa tu nombre o nombres.' : 'Ingresa tus apellidos.';
             }
 
-            const normalized = value.normalize('NFC');
+            if (Array.from(normalized).length > 255) {
+                return field === 'firstName'
+                    ? 'El nombre no puede superar los 255 caracteres.'
+                    : 'Los apellidos no pueden superar los 255 caracteres.';
+            }
+
             return namePattern.exec(normalized)?.[0] === normalized
                 ? ''
                 : 'Usa únicamente letras y espacios; se permiten acentos y ñ.';

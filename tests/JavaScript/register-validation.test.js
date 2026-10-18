@@ -1,20 +1,46 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { validateRegistrationField } from '../../resources/js/register-validation.js';
+import { trimRegistrationName, validateRegistrationField } from '../../resources/js/register-validation.js';
 
 for (const field of ['firstName', 'lastName']) {
     test(`${field}: accepts Unicode letters, accents, spaces and multiple names`, () => {
-        for (const value of ['María José', 'Iñaki', 'Muñoz García', 'De la Cruz', 'Jose\u0301', '李 明']) {
+        for (const value of ['María José', 'Iñaki', 'Muñoz García', 'De la Cruz', 'Jose\u0301', '李 明', 'ÁÉÍÓÚ ÜÑ', 'áéíóú üñ', 'María  José', '  María José  ', 'A'.repeat(255), 'Jose\u0301'.repeat(51)]) {
             assert.equal(validateRegistrationField(field, value), '', value);
         }
     });
 
     test(`${field}: rejects empty input, digits, punctuation, emoji and non-space whitespace`, () => {
-        for (const value of ['', '   ', 'Ana2', 'Ana-María', "O'Connor", 'Ana 😀', 'Ana\tMaría', 'Ana\nMaría', 'Ana\n', '\u0301']) {
+        for (const value of ['', '   ', 'Ana2', 'Ana-María', "O'Connor", 'Ana 😀', 'Ana\tMaría', 'Ana\nMaría', 'Ana\n', '\tAna', 'Ana\rMaría', 'Ana\u00a0María', '\u0301', 'Ana\0', 'Ana\u200b', 'A'.repeat(256), 'Jose\u0301'.repeat(52)]) {
             assert.notEqual(validateRegistrationField(field, value), '', JSON.stringify(value));
         }
     });
+
+    test(`${field}: rejects each forbidden symbol, including question marks and quotes`, () => {
+        for (const symbol of ['?', '¿', '!', '¡', '@', '#', '$', '%', '&', '"', "'", '’', '-', '_', '.', '/', '😀', '❤️', '1️⃣']) {
+            assert.notEqual(validateRegistrationField(field, `Ana${symbol}María`), '', symbol);
+        }
+    });
+
+    test(`${field}: reports specific required and maximum length errors after trimming`, () => {
+        const required = field === 'firstName' ? 'Ingresa tu nombre o nombres.' : 'Ingresa tus apellidos.';
+        const tooLong = field === 'firstName'
+            ? 'El nombre no puede superar los 255 caracteres.'
+            : 'Los apellidos no pueden superar los 255 caracteres.';
+
+        assert.equal(validateRegistrationField(field, ''), required);
+        assert.equal(validateRegistrationField(field, '   '), required);
+        assert.equal(validateRegistrationField(field, 'A'.repeat(256)), tooLong);
+        assert.equal(validateRegistrationField(field, `  ${'A'.repeat(255)}  `), '');
+    });
 }
+
+test('names: trimming removes outer spaces while preserving compound names and forbidden characters', () => {
+    assert.equal(trimRegistrationName('  María  José  '), 'María  José');
+    assert.equal(trimRegistrationName('   '), '');
+    assert.equal(trimRegistrationName('  Ana?  '), 'Ana?');
+    assert.equal(trimRegistrationName('\tAna'), '\tAna');
+    assert.equal(trimRegistrationName('Jose\u0301'), 'Jose\u0301');
+});
 
 test('phone: requires exactly ten ASCII digits', () => {
     for (const value of ['5512345678', '0000000000']) {

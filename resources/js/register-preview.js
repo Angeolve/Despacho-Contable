@@ -1,4 +1,4 @@
-import { validateRegistrationField } from './register-validation';
+import { trimRegistrationName, validateRegistrationField } from './register-validation.js';
 
 const form = document.querySelector('[data-register-form]');
 
@@ -28,8 +28,11 @@ if (form) {
     // Keep native HTML constraints as a fallback; JavaScript supplies inline feedback.
     form.noValidate = true;
 
-    const validate = (field) => {
+    const validate = (field, trimName = false) => {
         const key = field.dataset.registerField;
+        if (trimName && (key === 'firstName' || key === 'lastName')) {
+            field.value = trimRegistrationName(field.value);
+        }
         const value = fieldValue(field);
         const serverError = serverErrors.get(field);
         if (serverError && serverError.value === value) {
@@ -57,7 +60,7 @@ if (form) {
     fields.forEach((field) => {
         field.addEventListener('blur', () => {
             touched.add(field);
-            validate(field);
+            validate(field, true);
         });
 
         field.addEventListener(field.type === 'checkbox' ? 'change' : 'input', () => {
@@ -68,7 +71,7 @@ if (form) {
 
     form.addEventListener('submit', (event) => {
         submitted = true;
-        const invalid = fields.filter((field) => !validate(field));
+        const invalid = fields.filter((field) => !validate(field, true));
 
         if (invalid.length) {
             event.preventDefault();

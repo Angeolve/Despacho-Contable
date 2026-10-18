@@ -12,6 +12,22 @@ class RegisterRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $names = [];
+
+        foreach (['name', 'last_name'] as $field) {
+            $value = $this->input($field);
+
+            if (is_string($value)) {
+                // Trim ordinary spaces only; tabs and other whitespace remain invalid.
+                $names[$field] = trim($value, ' ');
+            }
+        }
+
+        $this->merge($names);
+    }
+
     public function rules(): array
     {
         $name = ['bail', 'required', 'string', 'max:255', 'regex:/\A(?:\p{L}\p{M}*| )+\z/u'];

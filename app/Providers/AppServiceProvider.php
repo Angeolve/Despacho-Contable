@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\ServiceProvider;
@@ -21,6 +22,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        ResetPassword::toMailUsing(function (object $user, #[\SensitiveParameter] string $token) {
+            // Use the configured application origin, never the request's Host header.
+            $url = rtrim(config('app.url'), '/').route('password.reset', [
+                'token' => $token, 'email' => $user->getEmailForPasswordReset(),
+            ], false);
+
+            return (new MailMessage)
+                // SMTP prevents a log mailer or failover from recording the secret URL.
+                ->mailer('smtp')
+                ->subject('Restablece tu contraseña · W&A Balance')
+                ->greeting('Hola.')
+                ->line('Recibimos una solicitud para restablecer la contraseña de tu cuenta de W&A Balance.')
+                ->action('Restablecer contraseña', $url)
+                ->line('Este enlace vence en '.config('auth.passwords.'.config('auth.defaults.passwords').'.expire').' minutos y solo puede utilizarse una vez.')
+                ->line('Si no solicitaste el cambio, puedes ignorar este correo. Tu contraseña no cambiará.');
+        });
+
         VerifyEmail::toMailUsing(function (object $user, string $url) {
             return (new MailMessage)
                 ->subject('Verifica tu correo · W&A Balance')

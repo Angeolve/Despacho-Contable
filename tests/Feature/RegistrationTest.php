@@ -97,6 +97,57 @@ class RegistrationTest extends TestCase
         ];
     }
 
+    #[DataProvider('invalidNames')]
+    public function test_invalid_names_cannot_create_users_without_javascript(string $field, mixed $value, string $message): void
+    {
+        $this->from('/register')->post('/register', $this->payload([$field => $value]))
+            ->assertRedirect('/register')->assertSessionHasErrors([$field => $message]);
+
+        $this->assertDatabaseEmpty('users');
+        $this->assertGuest();
+        Notification::assertNothingSent();
+    }
+
+    public static function invalidNames(): array
+    {
+        $cases = [];
+
+        foreach (['name', 'last_name'] as $field) {
+            $required = $field === 'name' ? 'Ingresa tu nombre o nombres.' : 'Ingresa tus apellidos.';
+            foreach (['empty' => '', 'null' => null, 'spaces' => '   '] as $label => $value) {
+                $cases[$field.' '.$label] = [$field, $value, $required];
+            }
+
+            $invalid = [
+                'digits' => 'Ana2', 'emoji' => 'Ana😀', 'heart emoji' => 'Ana❤️',
+                'keycap emoji' => 'Ana1️⃣', 'hyphen' => 'Ana-María', 'apostrophe' => "O'Connor",
+                'curly apostrophe' => 'O’Connor', 'quote' => 'Ana"', 'question' => 'Ana?',
+                'opening question' => '¿Ana', 'exclamation' => 'Ana!', 'opening exclamation' => '¡Ana',
+                'at sign' => 'Ana@', 'hash' => 'Ana#', 'dollar' => 'Ana$', 'percent' => 'Ana%',
+                'ampersand' => 'Ana&', 'underscore' => 'Ana_', 'period' => 'Ana.', 'slash' => 'Ana/',
+                'tab' => "Ana\tMaría", 'leading tab' => "\tAna", 'newline' => "Ana\nMaría",
+                'trailing newline' => "Ana\n", 'carriage return' => "Ana\rMaría",
+                'nonbreaking space' => "Ana\u{00a0}María", 'isolated accent' => "\u{0301}",
+                'null byte' => "Ana\0", 'zero width space' => "Ana\u{200b}",
+            ];
+
+            foreach ($invalid as $label => $value) {
+                $cases[$field.' '.$label] = [$field, $value, 'Usa únicamente letras y espacios; se permiten acentos y ñ.'];
+            }
+
+            $cases[$field.' array'] = [$field, ['Ana'], 'Este campo debe contener texto válido.'];
+            $cases[$field.' integer'] = [$field, 123, 'Este campo debe contener texto válido.'];
+            $cases[$field.' too long'] = [$field, str_repeat('A', 256), $field === 'name'
+                ? 'El nombre no puede superar los 255 caracteres.'
+                : 'Los apellidos no pueden superar los 255 caracteres.'];
+            $cases[$field.' too long decomposed'] = [$field, str_repeat("Jose\u{0301}", 52), $field === 'name'
+                ? 'El nombre no puede superar los 255 caracteres.'
+                : 'Los apellidos no pueden superar los 255 caracteres.'];
+        }
+
+        return $cases;
+    }
+
     #[DataProvider('validNames')]
     public function test_unicode_names_and_multiple_surnames_are_accepted(string $name, string $lastName): void
     {
@@ -106,7 +157,34 @@ class RegistrationTest extends TestCase
 
     public static function validNames(): array
     {
-        return [['Iñaki', 'Muñoz'], ['José', 'García de la Cruz'], ['李 明', '王']];
+        return [
+            ['Iñaki', 'Muñoz'], ['José', 'García de la Cruz'], ['李 明', '王'],
+            ['ÁÉÍÓÚ ÜÑ', 'áéíóú üñ'], ['María  José', 'Muñoz  de la Cruz'],
+            [str_repeat('A', 255), str_repeat("Jose\u{0301}", 51)],
+        ];
+    }
+
+    public function test_names_are_trimmed_before_validation_and_storage(): void
+    {
+        $this->post('/register', $this->payload([
+            'name' => '   María  José   ', 'last_name' => '   Muñoz de la Cruz   ',
+        ]))->assertSessionHasNoErrors()->assertRedirect(route('verification.notice'));
+
+        $user = User::sole();
+        $this->assertSame('María  José', $user->name);
+        $this->assertSame('Muñoz de la Cruz', $user->last_name);
+        Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_name_length_is_checked_after_trimming_outer_spaces(): void
+    {
+        $name = str_repeat('A', 255);
+        $this->post('/register', $this->payload([
+            'name' => '  '.$name.'  ', 'last_name' => '  '.$name.'  ',
+        ]))->assertSessionHasNoErrors()->assertRedirect(route('verification.notice'));
+
+        $this->assertSame($name, User::sole()->name);
+        $this->assertSame($name, User::sole()->last_name);
     }
 
     #[DataProvider('validPasswords')]
