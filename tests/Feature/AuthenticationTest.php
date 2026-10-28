@@ -112,6 +112,38 @@ class AuthenticationTest extends TestCase
         $this->assertDatabaseEmpty('users');
     }
 
+    #[DataProvider('malformedLoginFields')]
+    public function test_array_input_is_rejected_and_login_can_render_after_the_redirect(string $field, array $value): void
+    {
+        $this->from('/login')->post('/login', $this->credentials([$field => $value]))
+            ->assertRedirect('/login')
+            ->assertSessionHasErrors([$field => 'Este campo debe contener texto válido.'])
+            ->assertSessionMissing('_old_input.password');
+        $this->assertGuest();
+        $this->assertDatabaseEmpty('users');
+        Notification::assertNothingSent();
+
+        $response = $this->get('/login')->assertOk()
+            ->assertSee('Este campo debe contener texto válido.')
+            ->assertDontSee('malformed-array-value');
+        $document = new \DOMDocument;
+        $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+        $xpath = new \DOMXPath($document);
+        $expectedEmail = $field === 'email' ? '' : $this->credentials()['email'];
+        $this->assertSame($expectedEmail, $xpath->query('//input[@name="email"]')->item(0)->getAttribute('value'));
+        $this->assertSame('', $xpath->query('//input[@name="password"]')->item(0)->getAttribute('value'));
+    }
+
+    public static function malformedLoginFields(): array
+    {
+        return [
+            'email indexed array' => ['email', ['malformed-array-value']],
+            'email nested array' => ['email', ['nested' => ['malformed-array-value']]],
+            'password indexed array' => ['password', ['malformed-array-value']],
+            'password nested array' => ['password', ['nested' => ['malformed-array-value']]],
+        ];
+    }
+
     public static function invalidLoginFields(): array
     {
         return [

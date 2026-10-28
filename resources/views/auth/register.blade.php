@@ -17,7 +17,7 @@
                 <x-form.input
                     id="register-name"
                     name="name"
-                    :value="old('name')"
+                    :value="is_string(old('name')) ? old('name') : ''"
                     :error="$errors->first('name')"
                     maxlength="255"
                     label="Nombre(s)"
@@ -33,7 +33,7 @@
                 <x-form.input
                     id="register-last-name"
                     name="last_name"
-                    :value="old('last_name')"
+                    :value="is_string(old('last_name')) ? old('last_name') : ''"
                     :error="$errors->first('last_name')"
                     maxlength="255"
                     label="Apellidos"
@@ -49,7 +49,7 @@
                 <x-form.input
                     id="register-phone"
                     name="phone"
-                    :value="old('phone')"
+                    :value="is_string(old('phone')) ? old('phone') : ''"
                     :error="$errors->first('phone')"
                     label="Número de teléfono"
                     type="tel"
@@ -68,7 +68,7 @@
                 <x-form.input
                     id="register-email"
                     name="email"
-                    :value="old('email')"
+                    :value="is_string(old('email')) ? old('email') : ''"
                     :error="$errors->first('email')"
                     maxlength="255"
                     label="Correo electrónico"

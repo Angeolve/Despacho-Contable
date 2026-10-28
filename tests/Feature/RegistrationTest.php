@@ -82,6 +82,42 @@ class RegistrationTest extends TestCase
         Notification::assertNothingSent();
     }
 
+    #[DataProvider('malformedRegistrationFields')]
+    public function test_array_input_is_rejected_and_registration_can_render_after_the_redirect(string $field, array $value): void
+    {
+        $this->from('/register')->post('/register', $this->payload([$field => $value]))
+            ->assertRedirect('/register')
+            ->assertSessionHasErrors([$field => 'Este campo debe contener texto válido.'])
+            ->assertSessionMissing('_old_input.password')
+            ->assertSessionMissing('_old_input.password_confirmation');
+        $this->assertGuest();
+        $this->assertDatabaseEmpty('users');
+        Notification::assertNothingSent();
+
+        $response = $this->get('/register')->assertOk()
+            ->assertSee('Este campo debe contener texto válido.')
+            ->assertDontSee('malformed-array-value');
+        $document = new \DOMDocument;
+        $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+        $xpath = new \DOMXPath($document);
+
+        foreach (['name', 'last_name', 'phone', 'email', 'password', 'password_confirmation'] as $input) {
+            $expected = $input === $field || str_starts_with($input, 'password') ? '' : $this->payload()[$input];
+            $this->assertSame($expected, $xpath->query('//input[@name="'.$input.'"]')->item(0)->getAttribute('value'), $input);
+        }
+    }
+
+    public static function malformedRegistrationFields(): array
+    {
+        $cases = [];
+        foreach (['name', 'last_name', 'phone', 'email', 'password', 'password_confirmation'] as $field) {
+            $cases[$field.' indexed array'] = [$field, ['malformed-array-value']];
+            $cases[$field.' nested array'] = [$field, ['nested' => ['malformed-array-value']]];
+        }
+
+        return $cases;
+    }
+
     public static function invalidValues(): array
     {
         return [

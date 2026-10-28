@@ -17,7 +17,7 @@
                 <x-form.input
                     id="email"
                     name="email"
-                    :value="old('email')"
+                    :value="is_string(old('email')) ? old('email') : ''"
                     :error="$errors->first('email')"
                     label="Correo electrónico"
                     type="email"
