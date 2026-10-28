@@ -273,7 +273,7 @@ class AuthenticationTest extends TestCase
         $other = User::factory()->create();
         $this->actingAs($user)->get($allowed)->assertOk()
             ->assertHeader('Cache-Control', 'no-store, private')
-            ->assertSee('El panel se desarrollará posteriormente.')
+            ->assertSee($role === Role::CLIENTE ? 'Tu espacio, tu tranquilidad' : 'El panel se desarrollará posteriormente.')
             ->assertSee('action="'.route('logout').'"', false)
             ->assertDontSee($other->email)->assertDontSee($other->password);
         $this->get($forbidden.'?role='.$role.'&role_id='.$user->role_id)->assertForbidden();
